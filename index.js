@@ -1,10 +1,24 @@
 import express from "express";
 import axios from "axios";
+import cors from "cors";
 
 import * as cheerio from 'cheerio';
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+var corsOptions = {
+    origin: '*',
+    methods: "GET, HEAD, PUT, PATCH, POST, DELETE",
+    httpOnly: true,
+    credentials: true,
+    optionsSuccessStatus: 200
+}
+app.use(cors(corsOptions));
+
+// Body parse 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const today = new Date()
 
