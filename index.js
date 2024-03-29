@@ -34,16 +34,16 @@ app.get("/today", (req, res) => {
 
     console.log(`Today's date is ${day}`)
 
+    const day = String(today.getDate()).padStart(2, '0');
+    const devotionDay = parseInt(day) - 1;
+
     console.log(`Today's devotion day is for URL is ${devotionDay}`);
-    res.send(`Today's date is ${day} \nToday's devotion day for URL is ${devotionDay}`)
+    res.send(`Today's date is ${day}. Today's devotion day for URL is ${devotionDay}`)
 })
 
-app.get("/todays-devotion", async (req, res) => {
-    
-    const URL = `https://www.openheavensdaily.com/2024/03/open-heaven-for-today-2024-open-heavens_${devotionDay}.html`;
-    
-    try {
-        const response = await axios.get(URL); // Make the HTTP request
+const URL = `https://www.openheavensdaily.com/2024/03/open-heaven-for-today-2024-open-heavens_${devotionDay}.html`;
+
+const response = await axios.get(URL); // Make the HTTP request
 
         let $ = cheerio.load(response.data);
         
@@ -90,21 +90,24 @@ app.get("/todays-devotion", async (req, res) => {
         };
         // Log the extracted values
         console.log(".........")
-        console.log(read);
+        console.log(responseData);
 
         // Send the response data to the client
-        res.json(responseData); 
+        // res.json(responseData);
+
+app.get("/todays-devotion", async (req, res) => {
+    
+    
+    try {
+
+        const result = responseData
+        res.json(result);
+         
     } catch (error) {
         console.error(error); // Log any errors
         res.status(500).send(error.message); // Send an error response to the client
     }
 });
-
-
-
-
-
-
 
 app.listen(port, () => {
     console.log(`Server started on port ${port}`)
