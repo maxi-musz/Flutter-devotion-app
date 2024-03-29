@@ -41,68 +41,76 @@ app.get("/today", (req, res) => {
     res.send(`Today's date is ${day}. Today's devotion day for URL is ${devotionDay}`)
 })
 
+// Define a function to fetch the data
+async function fetchData() {
+    const URL = `https://www.openheavensdaily.com/2024/03/open-heaven-for-today-2024-open-heavens_${devotionDay}.html`;
+    const response = await axios.get(URL);
+    const $ = cheerio.load(response.data);
+
+    // Extract TOPIC
+    const pTagTopic = $('p');
+    const textContentTopic = pTagTopic.text();
+    const regexTopic = /TOPIC:\s*(.*?)\s*(?=[A-Z]+:|$)/;
+    const matchTopic = textContentTopic.match(regexTopic);
+    const topic = matchTopic ? matchTopic[1].trim() : null;;
+    // const topic = $('p').text().match(/"(.*?)"/)[1]; // Extract the topic ("Thou shalt not steal")
+
+    // Extract PASSAGE
+    const memoriseElement = $('#Blog1 > div > div.blog-post.hentry.item-post > div.post-body.post-content > p:nth-child(4) > span');
+    let memoriseText = memoriseElement.text();
+    memoriseText = memoriseText.replace(/^MEMORISE:-/, '');
+    memoriseText = memoriseText.replace(/\\/g, '').replace(/'/g, '');
+
+    // Extract READ
+    const readElement = $('#Blog1 > div > div.blog-post.hentry.item-post > div.post-body.post-content > p:nth-child(5) > span');
+    let read = readElement.text();
+    read = read.replace(/^READ: /, '').replace(/"$/, '');
+
+    // Extract BODY
+    const postContent = $('#Blog1 > div > div.blog-post.hentry.item-post > div.post-body.post-content');
+    let body = '';
+    const pTagsBody = postContent.find('p');
+    for (let i = 3; i < pTagsBody.length; i++) {
+        // Extract the text content of each <p> tag and concatenate it to the 'body' variable
+        body += $(pTagsBody[i]).text().trim() + '\n';
+    }
+
+    // Return an object containing the extracted data
+    return {
+        date: new Date(),
+        topic,
+        memorise: memoriseText,
+        Read: read,
+        body
+    };
+};
+
 const URL = `https://www.openheavensdaily.com/2024/03/open-heaven-for-today-2024-open-heavens_${devotionDay}.html`;
 
 const response = await axios.get(URL); // Make the HTTP request
 
         let $ = cheerio.load(response.data);
         
-        // Extract TOPIC
-        const pTagTopic = $('p');
-        const textContentTopic = pTagTopic.text();
-        const regexTopic = /TOPIC:\s*(.*?)\s*(?=[A-Z]+:|$)/;
-        const matchTopic = textContentTopic.match(regexTopic);
-        const topic = matchTopic ? matchTopic[1].trim() : null;;
-        // const topic = $('p').text().match(/"(.*?)"/)[1]; // Extract the topic ("Thou shalt not steal")
-
-        // Extract PASSAGE
-        const memoriseElement = $('#Blog1 > div > div.blog-post.hentry.item-post > div.post-body.post-content > p:nth-child(4) > span');
-        let memoriseText = memoriseElement.text();
-        memoriseText = memoriseText.replace(/^MEMORISE:-/, '');
-        memoriseText = memoriseText.replace(/\\/g, '').replace(/'/g, '');
-
-        // Extract READ
-        const readElement = $('#Blog1 > div > div.blog-post.hentry.item-post > div.post-body.post-content > p:nth-child(5) > span');
-        let read = readElement.text();
-        read = read.replace(/^READ: /, '').replace(/"$/, '');
-
-        // Extract BODY
-        const postContent = $('#Blog1 > div > div.blog-post.hentry.item-post > div.post-body.post-content');
-        let body = '';
-        const pTagsBody = postContent.find('p');
-        for (let i = 3; i < pTagsBody.length; i++) {
-            // Extract the text content of each <p> tag and concatenate it to the 'body' variable
-            body += $(pTagsBody[i]).text().trim() + '\n';
-        }
-
-
-        // Create an object containing the topic and passage
-        const responseData = {
-            success: true,
-            message: "Data retrieved successfully",
-            data: {
-                date: new Date(),
-                topic,
-                memorise: memoriseText,
-                Read: read,
-                body
-            }
-        };
-        // Log the extracted values
-        console.log(".........")
-        console.log(responseData);
+        
 
         // Send the response data to the client
         // res.json(responseData);
 
+// Define the route handler for '/todays-devotion'
 app.get("/todays-devotion", async (req, res) => {
-    
-    
     try {
+        // Fetch the data
+        const data = await fetchData();
 
-        const result = responseData
-        res.json(result);
-         
+        // Create a response object
+        const responseData = {
+            success: true,
+            message: "Data retrieved successfully",
+            data: data
+        };
+
+        // Send the response to the client
+        res.json(responseData);
     } catch (error) {
         console.error(error); // Log any errors
         res.status(500).send(error.message); // Send an error response to the client
